@@ -8,6 +8,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: z.string().default('7d'),
   FIREBASE_PROJECT_ID: z.string().min(1),
+  FIREBASE_DATABASE_URL: z.string().url().optional(),
   FIREBASE_STORAGE_BUCKET: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   FIREBASE_WEB_API_KEY: z.string().optional(),

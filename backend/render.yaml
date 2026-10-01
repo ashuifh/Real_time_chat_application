@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: chatt-backend
+    runtime: node
+    plan: starter
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: FRONTEND_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_DATABASE_URL
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: FIREBASE_WEB_API_KEY
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false

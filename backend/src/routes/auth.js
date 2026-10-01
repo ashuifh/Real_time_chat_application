@@ -29,6 +29,9 @@ function safeUser(uid, data) {
 
 router.post('/register', asyncHandler(async (req, res) => {
   const input = parse(registerSchema, req.body);
+  const existingProfile = await db.collection('users').where('email', '==', input.email).limit(1).get();
+  if (!existingProfile.empty) throw new HttpError(409, 'Email is already registered');
+
   let firebaseUser;
   try {
     firebaseUser = await auth.createUser({ email: input.email, password: input.password, displayName: input.displayName });

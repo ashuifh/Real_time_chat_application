@@ -8,6 +8,12 @@ Requires Node.js 20 or newer. Copy `.env.example` to `.env`, set the Firebase pr
 
 Install packages yourself with `npm install` (or `npm ci` when using the committed lockfile). Start locally with `npm run dev`; the health check is `GET /health`. This repository intentionally does not commit `node_modules` or real credentials. Generate a production `JWT_SECRET` with a cryptographically secure random generator and configure secrets in Render's environment settings.
 
+## Docker
+
+Build the backend image from the `backend/` directory with `docker build -t chatt-backend:local .`. Run it with `docker run --rm --env-file .env -p 3000:3000 chatt-backend:local`. Put Firebase Admin credentials in the ignored local `.env` as `FIREBASE_SERVICE_ACCOUNT_JSON` for this local container run, or inject them through the deployment platform's secret environment settings. The Docker build context excludes `.env`, service-account files, and `node_modules`; credentials are never copied into the image. Start Docker Desktop before building on Windows.
+
+API requests are limited to 600 per IP per 15 minutes, authentication routes to 120 per IP per 15 minutes, and registration to 100 per IP per hour. These are request-abuse limits, not a cap on simultaneous users. The in-memory limiter is suitable for a single instance; use a shared Redis store if scaling to multiple instances.
+
 ## REST API
 
 Protected routes require `Authorization: Bearer <backend-jwt>`. Registration creates the Firebase Auth user and Firestore profile. Login verifies the email and password through Firebase Identity Toolkit, so `FIREBASE_WEB_API_KEY` must be set. Logout increments the profile token version and invalidates previously issued backend JWTs.
@@ -48,7 +54,7 @@ Connect with `auth: { token: '<backend-jwt>' }`. Events: `user:setup`, `chat:joi
 Presence is tracked per socket connection in `presence/{uid}` so one device disconnecting does not mark a user offline while another is connected. Typing state is under `typing/{chatId}/{uid}` and is removed on disconnect.
 
 ## Firebase and Render
-Deploy Firestore rules and indexes plus Realtime Database rules with the Firebase CLI from this directory. Admin SDK requests bypass Firebase client Security Rules; the API performs its own JWT and chat membership checks. Client rules intentionally deny client writes to chat and message records; use this API for mutations. The current RTDB rules limit presence/typing reads to the owning user, while Socket.IO broadcasts online and typing events to connected clients/chat rooms.
+Deploy Firestore rules and indexes plus Realtime Database rules with the Firebase CLI from this directory. To resolve a missing chat-list index, run `npx firebase-tools deploy --only firestore:indexes --project YOUR_FIREBASE_PROJECT_ID` from `backend/`, then restart the backend and retry. Admin SDK requests bypass Firebase client Security Rules; the API performs its own JWT and chat membership checks. Client rules intentionally deny client writes to chat and message records; use this API for mutations. The current RTDB rules limit presence/typing reads to the owning user, while Socket.IO broadcasts online and typing events to connected clients/chat rooms.
 
 Render uses `npm ci` and `npm start`. Set `FRONTEND_URL`, the Firebase project settings, API key, and service-account JSON in Render's secret environment settings. Do not put credentials in the repository. Add Redis-backed Socket.IO adapter and shared rate-limit storage before horizontally scaling beyond a single Render instance; in-memory Socket.IO rooms do not synchronize between instances.
 

@@ -12,6 +12,13 @@ export function asyncHandler(handler) {
 
 export function errorHandler(error, req, res, next) {
   if (res.headersSent) return next(error);
+  if (error.code === 9 && /index/i.test(error.message ?? '')) {
+    console.error('Firestore composite index missing:', error.message);
+    return res.status(503).json({
+      error: 'Firestore index is not deployed. Deploy backend/firestore.indexes.json, then retry.',
+      code: 'FIRESTORE_INDEX_MISSING',
+    });
+  }
   const status = Number.isInteger(error.status) ? error.status : 500;
   if (status >= 500) console.error(error);
   res.status(status).json({
